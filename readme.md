@@ -1,5 +1,5 @@
 # SQL Query Runner (Python)
-
+pyinstaller --onefile --noconsole --exclude-module PyQt6 sqlquery.py
 A command-line tool to execute MySQL queries or SQL files and return the results as formatted JSON. Supports single queries, multi-statement queries, and reading queries from files. Handles date, datetime, and decimal types in output.
 
 ## Requirements

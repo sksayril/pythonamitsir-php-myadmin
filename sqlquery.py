@@ -14,6 +14,13 @@ def custom_json_encoder(obj):
         return float(obj)  # or str(obj) if you want string representation
     raise TypeError(f"Type {type(obj)} not serializable")
 
+def print_json(data, is_error=False):
+    output = json.dumps(data, indent=2, default=custom_json_encoder, ensure_ascii=False)
+    if is_error:
+        print(output, file=sys.stderr, flush=True)
+    else:
+        print(output, flush=True)
+
 def connect_and_execute(host, user, password, database, query=None, sql_file=None):
     try:
         connection = mysql.connector.connect(
@@ -24,28 +31,28 @@ def connect_and_execute(host, user, password, database, query=None, sql_file=Non
         )
 
         if not connection.is_connected():
-            print(json.dumps({
+            print_json({
                 "status": "error",
                 "message": "Connection failed"
-            }, indent=2))
+            }, is_error=True)
             return
 
         # If SQL file is given, read query from file
         if sql_file:
             if not os.path.exists(sql_file):
-                print(json.dumps({
+                print_json({
                     "status": "error",
                     "message": f"SQL file not found: {sql_file}"
-                }, indent=2))
+                }, is_error=True)
                 return
             with open(sql_file, 'r') as f:
                 query = f.read()
 
         if not query:
-            print(json.dumps({
+            print_json({
                 "status": "error",
                 "message": "No SQL query or file provided"
-            }, indent=2))
+            }, is_error=True)
             return
 
         all_results = []
@@ -94,13 +101,19 @@ def connect_and_execute(host, user, password, database, query=None, sql_file=Non
             "results": all_results
         }
 
-        print(json.dumps(response, indent=2, default=custom_json_encoder))
+        print_json(response)
 
     except mysql.connector.Error as e:
-        print(json.dumps({
+        print_json({
             "status": "error",
             "message": str(e)
-        }, indent=2))
+        }, is_error=True)
+        sys.exit(1)
+    except Exception as e:
+        print_json({
+            "status": "error",
+            "message": f"Unexpected error: {str(e)}"
+        }, is_error=True)
         sys.exit(1)
 
 if __name__ == "__main__":
